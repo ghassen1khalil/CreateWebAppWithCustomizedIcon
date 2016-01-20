@@ -4,48 +4,25 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.provider.Browser;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+
+import org.apache.http.util.ByteArrayBuffer;
 
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.security.KeyStore;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
-import java.util.Random;
-
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.conn.ssl.X509HostnameVerifier;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.SingleClientConnManager;
-import org.apache.http.util.ByteArrayBuffer;
-
-import android.util.Log;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
-import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.URL;
-import java.net.URLConnection;
+import java.util.Random;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -53,22 +30,24 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import java.security.cert.X509Certificate;
 
 public class MainActivity extends AppCompatActivity {
 
     String iconName;
-
+    Button btn ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Random randomGenerator = new Random();
-        int randomInt = randomGenerator.nextInt(100);
-        Log.d("RANDOM", Integer.toString(randomInt));
-        iconName = "icone"+Integer.toString(randomInt)+".png";
-        new DownloadIcone().execute("Icone.png");
+        btn = (Button) findViewById(R.id.button);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new DownloadIcone().execute("Icone.png");
+            }
+        });
+
 
         //createWebAppBookmark("http://google.com", "Google");
     }
@@ -79,9 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         //A ajouter {{
 
-        //File icon = new File("/storage/emulated/0/ProjetEMMIcones/Icone.png");
 
-        //Bitmap theBitmap = BitmapFactory.decodeFile("/storage/emulated/0/ProjetEMMIcones/Icone.png");
         int size = (int) getResources().getDimension(android.R.dimen.app_icon_size);
         Bitmap scaledBitmap = Bitmap.createScaledBitmap(BitmapFactory.decodeFile("/storage/emulated/0/ProjetEMMIcones/Icone.png"),size,size,true);
         //}}
@@ -93,8 +70,6 @@ public class MainActivity extends AppCompatActivity {
         shortcutIntent.putExtra(Browser.EXTRA_APPLICATION_ID, Long.toString(uniqueId));
         in.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
         in.putExtra(Intent.EXTRA_SHORTCUT_NAME, title);
-
-        //in.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE,Intent.ShortcutIconResource.fromContext(context,R.drawable.ic_bookmark));
         //A ajouter {{
         in.putExtra(Intent.EXTRA_SHORTCUT_ICON,scaledBitmap);
         in.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
@@ -113,8 +88,6 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... params) {
-            final String PATH = "/data/data/com.example.ghassenati.myapplication/";  //put the downloaded file here
-
             try {
                 //SSL Stuff
                 TrustManager[] trustAllCerts = new TrustManager[] {
@@ -138,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
                 };
                 HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
-                URL url = new URL("https://emm.sifast.fr:9443/publisher/upload/sGxawkeep-512.png"); //you can write here any link
+                URL url = new URL("https://emm.sifast.fr:9443/publisher/upload/sGxawkeep-512.png");
 
 
 
@@ -156,24 +129,19 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("ImageManager", "download url:" + url);
                 Log.d("ImageManager", "downloaded file name:" + params[0]);
 
-                /* Open a connection to that URL. */
-                //URLConnection ucon = url.openConnection();
 
                 URLConnection urlConnection = url.openConnection();
 
                 InputStream is = urlConnection.getInputStream();
 
                 BufferedInputStream bis = new BufferedInputStream(is);
-                        /*
-                         * Read bytes to the Buffer until there is nothing more to read(-1).
-                         */
+
                 ByteArrayBuffer baf = new ByteArrayBuffer(50);
                 int current = 0;
                 while ((current = bis.read()) != -1) {
                     baf.append((byte) current);
                 }
 
-                        /* Convert the Bytes read to a String. */
                 FileOutputStream fos = new FileOutputStream(file);
                 fos.write(baf.toByteArray());
                 fos.close();
