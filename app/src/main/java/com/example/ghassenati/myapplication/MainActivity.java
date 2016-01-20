@@ -42,6 +42,19 @@ import javax.net.ssl.TrustManagerFactory;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.net.URLConnection;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+import java.security.cert.X509Certificate;
+
 public class MainActivity extends AppCompatActivity {
 
     String iconName;
@@ -103,25 +116,27 @@ public class MainActivity extends AppCompatActivity {
             final String PATH = "/data/data/com.example.ghassenati.myapplication/";  //put the downloaded file here
 
             try {
-               //SSL Stuff
-                CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                InputStream caInput = new BufferedInputStream(new FileInputStream("load-der.crt"));
-                Certificate ca;
-                try {
-                    ca = cf.generateCertificate(caInput);
-                    System.out.println("ca=" + ((X509Certificate) ca).getSubjectDN());
-                } finally {
-                    caInput.close();
-                }
-                String keyStoreType = KeyStore.getDefaultType();
-                KeyStore keyStore = KeyStore.getInstance(keyStoreType);
-                keyStore.load(null, null);
-                keyStore.setCertificateEntry("ca", ca);
-                String tmfAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
-                TrustManagerFactory tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
-                tmf.init(keyStore);
-                SSLContext context = SSLContext.getInstance("TLS");
-                context.init(null, tmf.getTrustManagers(), null);
+                //SSL Stuff
+                TrustManager[] trustAllCerts = new TrustManager[] {
+                        new X509TrustManager() {
+                            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                                return null;
+                            }
+                            public void checkClientTrusted(X509Certificate[] certs, String authType) {
+                            }
+                            public void checkServerTrusted(X509Certificate[] certs, String authType) {
+                            }
+                        }
+                };
+                SSLContext sc = SSLContext.getInstance("SSL");
+                sc.init(null, trustAllCerts, new java.security.SecureRandom());
+                HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+                HostnameVerifier allHostsValid = new HostnameVerifier() {
+                    public boolean verify(String hostname, SSLSession session) {
+                        return true;
+                    }
+                };
+                HttpsURLConnection.setDefaultHostnameVerifier(allHostsValid);
 
                 URL url = new URL("https://emm.sifast.fr:9443/publisher/upload/sGxawkeep-512.png"); //you can write here any link
 
@@ -144,8 +159,7 @@ public class MainActivity extends AppCompatActivity {
                 /* Open a connection to that URL. */
                 //URLConnection ucon = url.openConnection();
 
-                HttpsURLConnection urlConnection = (HttpsURLConnection)url.openConnection();
-                InputStream in = urlConnection.getInputStream();
+                URLConnection urlConnection = url.openConnection();
 
                 InputStream is = urlConnection.getInputStream();
 
